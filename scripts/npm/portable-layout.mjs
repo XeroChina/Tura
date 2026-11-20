@@ -12,12 +12,12 @@ export function portableExecutableName(name, platform = process.platform) {
   return platform === "win32" ? `${name}.exe` : name;
 }
 
-export function portableLayoutRoots(portableRoot) {
+export function portableLayoutRoots(portableRoot, platform = process.platform) {
   return {
     programDir: path.join(portableRoot, PROGRAM_DIR_NAME),
     dataDir: path.join(portableRoot, DATA_DIR_NAME),
     markerFile: path.join(portableRoot, PORTABLE_MARKER_FILE),
-    rootLauncher: path.join(portableRoot, portableExecutableName(ROOT_LAUNCHER_NAME)),
+    rootLauncher: path.join(portableRoot, portableExecutableName(ROOT_LAUNCHER_NAME, platform)),
   };
 }
 
@@ -32,7 +32,7 @@ export function stagePortableLayout({
   launcherBinary,
   platform = process.platform,
 }) {
-  const roots = portableLayoutRoots(portableRoot);
+  const roots = portableLayoutRoots(portableRoot, platform);
   mkdirSync(portableRoot, { recursive: true });
   renameSync(sourceReleaseDir, roots.programDir);
   cpSync(launcherBinary, roots.rootLauncher);
@@ -43,7 +43,7 @@ export function stagePortableLayout({
 }
 
 export function missingPortableFiles(portableRoot, platform = process.platform) {
-  const roots = portableLayoutRoots(portableRoot);
+  const roots = portableLayoutRoots(portableRoot, platform);
   const required = [
     roots.rootLauncher,
     roots.markerFile,
