@@ -54,8 +54,22 @@ Use these when you want a self-contained download without npm:
 - `tura-<tag>-macos-arm64.tar.gz`
 - `tura-<tag>-windows-x64.zip`
 
-Extract the archive, then run `target/release/tura` on Linux or macOS, or
-`target\release\tura.exe` on Windows.
+Extract the archive, then run `target/release/tura` on Linux or macOS.
+
+The Windows archive is portable. Extracting it produces this layout:
+
+```text
+tura.exe      launcher: double-click for the GUI, or pass CLI arguments
+portable      marker that routes all user files into Data/
+Program/      executables and runtime resources (CLI, GUI, gateway, prompts)
+Data/         user state: .env, .tura/, db/session_log
+```
+
+Run `tura.exe` with no arguments to open the GUI, or pass CLI arguments such as
+`tura.exe --help` to use the terminal CLI. While the `portable` marker is present,
+instance state and provider credentials are written under `Data/`; removing the
+marker restores the default location-based behavior. Keep `tura.exe`, `Program/`,
+and `Data/` together so the launcher can find them.
 
 ## npm packages
 

@@ -37,6 +37,7 @@ const requiredFiles = [
   "scripts/npm/verify-npm-install-fixture.mjs",
   "scripts/npm/package-platform.mjs",
   "scripts/npm/package-release.mjs",
+  "scripts/npm/portable-layout.mjs",
   "scripts/npm/stage-desktop-release-assets.mjs",
   "scripts/npm/stage-main-package.mjs",
   "scripts/npm/restore-main-package.mjs",

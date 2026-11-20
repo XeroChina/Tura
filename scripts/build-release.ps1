@@ -26,8 +26,8 @@ Usage:
 
 Builds release artifacts directly into target\release.
 By default this builds backend binaries, the web GUI dist, the compiled TUI,
-and the Tauri desktop bundle. Use -BackendOnly when a CI job only needs Rust
-release artifacts.
+the Tauri desktop bundle, and the portable launcher. Use -BackendOnly when a CI
+job only needs Rust release artifacts.
 By default release output includes runtime configs, prompts, markdown, command
 metadata, and command source files. Pass -Binary to keep only binaries and the
 minimal provider config.
@@ -203,7 +203,7 @@ function Remove-LocalRuntimeState {
 }
 
 Require-Command "cargo" "Install Rust, then rerun this script."
-if ($BuildTui -or $BuildGui -or $BuildTauri) {
+if (-not $BackendOnly) {
   Require-Command "bun" "Install Bun, then rerun this script or pass -BackendOnly."
 }
 if ($BackendOnly) {
@@ -275,6 +275,23 @@ if ($BuildTui) {
   }
 }
 
+if (-not $BackendOnly) {
+  New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
+  $LauncherOut = Join-Path $TargetDir "tura_launcher"
+  $bunArgs = @("build", "--compile", "--outfile", $LauncherOut, "apps\launcher\main.ts")
+  if ($IsWindows -or $env:OS -eq "Windows_NT") {
+    $LauncherOut = "$LauncherOut.exe"
+    $bunArgs = @("build", "--compile", "--windows-icon", $IconPath, "--outfile", $LauncherOut, "apps\launcher\main.ts")
+  }
+  $PreviousTuraBuildKind = $env:TURA_BUILD_KIND
+  $env:TURA_BUILD_KIND = "release"
+  try {
+    Invoke-Checked "bun" $bunArgs
+  } finally {
+    $env:TURA_BUILD_KIND = $PreviousTuraBuildKind
+  }
+}
+
 if ($BuildTauri) {
   Invoke-JsInstallIfMissing (Join-Path $RepoRoot "apps\gui") @("app\node_modules\vite\package.json")
   Invoke-JsInstallIfMissing (Join-Path $RepoRoot "apps\tauri") @("node_modules\@tauri-apps\cli\package.json")
@@ -295,6 +312,7 @@ if ($BuildTauri) {
 Write-Host "Release artifacts ready in $TargetDir"
 $Entries = @("tura_exec.exe", "tura_gateway.exe", "tura_router.exe", "tura_session_db.exe", "tura_runtime.exe")
 if ($BuildTui) { $Entries = @("tura.exe") + $Entries }
+if (-not $BackendOnly) { $Entries += "tura_launcher.exe" }
 if ($BuildGui) { $Entries += "tura_gui_dist/" }
 if ($BuildTauri) { $Entries += "tura_gui bundle" }
 if (-not $Binary) { $Entries += "runtime configs/prompts/commands" }

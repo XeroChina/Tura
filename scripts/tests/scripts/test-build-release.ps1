@@ -152,6 +152,9 @@ foreach ($name in @(
   Assert-Path (Join-Path $TargetDir $name) "Missing release artifact: $name"
 }
 Assert-Path (Join-Path $TargetDir "config\provider_config.json") "Missing release provider config."
+if (-not $BackendOnly) {
+  Assert-Path (Join-Path $TargetDir "tura_launcher.exe") "Missing release launcher."
+}
 if (-not $Binary) {
   Assert-RuntimeConfigFiles
   Assert-Path (Join-Path $TargetDir "crates\tools\src\commands\shell_command\schema.json") "Missing release tool command schema."

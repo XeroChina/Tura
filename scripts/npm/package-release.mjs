@@ -6,6 +6,12 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { resolveWindowsPowerShellCommand } from "./cli-path.mjs";
 import {
+  LAUNCHER_SOURCE_NAME,
+  missingPortableFiles,
+  portableExecutableName,
+  stagePortableLayout,
+} from "./portable-layout.mjs";
+import {
   bundleCandidates,
   executableName,
   executableNames,
@@ -145,6 +151,26 @@ try {
     }
   }
 
+  const portableRoot = path.join(stageRoot, "portable");
+  if (process.platform === "win32") {
+    const launcherBinary = path.join(
+      sourceRelease,
+      portableExecutableName(LAUNCHER_SOURCE_NAME, process.platform)
+    );
+    if (!existsSync(launcherBinary)) {
+      fail(`missing portable launcher binary: ${path.relative(repoRoot, launcherBinary)}`);
+    }
+    stagePortableLayout({
+      portableRoot,
+      sourceReleaseDir: stageRelease,
+      launcherBinary,
+    });
+    const missingPortable = missingPortableFiles(portableRoot);
+    if (missingPortable.length > 0) {
+      fail(`portable release is missing required files: ${missingPortable.map((file) => path.relative(portableRoot, file)).join(", ")}`);
+    }
+  }
+
   mkdirSync(outDir, { recursive: true });
   rmSync(archivePath, { force: true });
   if (process.platform === "win32") {
@@ -157,7 +183,7 @@ try {
       "-ExecutionPolicy",
       "Bypass",
       "-Command",
-      `Compress-Archive -Path '${path.join(stageRoot, "target").replaceAll("'", "''")}' -DestinationPath '${archivePath.replaceAll("'", "''")}' -Force`
+      `Compress-Archive -Path '${path.join(portableRoot, "*").replaceAll("'", "''")}' -DestinationPath '${archivePath.replaceAll("'", "''")}' -Force`
     ]);
   } else {
     run("tar", ["-czf", archivePath, "target"], stageRoot);

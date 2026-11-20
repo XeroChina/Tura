@@ -160,6 +160,17 @@ if [ "$BINARY" -eq 0 ]; then
   require_path "$TARGET_DIR/scripts/unregister-cli.sh" "Missing release CLI unregistration script."
 fi
 
+if [ "$BACKEND_ONLY" -eq 0 ]; then
+  case "$(uname -s 2>/dev/null || echo unknown)" in
+  MINGW*|MSYS*|CYGWIN*)
+    require_path "$TARGET_DIR/tura_launcher.exe" "Missing release launcher."
+    ;;
+  *)
+    require_path "$TARGET_DIR/tura_launcher" "Missing release launcher."
+    ;;
+  esac
+fi
+
 if [ "$BACKEND_ONLY" -eq 0 ] && [ "$SKIP_TUI" -eq 0 ]; then
   require_path "$TARGET_DIR/tura" "Missing release TUI executable."
 fi

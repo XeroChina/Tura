@@ -204,6 +204,18 @@ jobs:
           Copy-Item -LiteralPath $releaseArchives[0].FullName -Destination $publishDir
           $desktopAssets | Copy-Item -Destination $publishDir
 
+          if ($IsWindows -or $env:OS -eq "Windows_NT") {
+            $inspectDir = Join-Path $env:RUNNER_TEMP "tura-portable-verify"
+            Remove-Item -LiteralPath $inspectDir -Recurse -Force -ErrorAction SilentlyContinue
+            Expand-Archive -LiteralPath $releaseArchives[0].FullName -DestinationPath $inspectDir -Force
+            foreach ($required in @("tura.exe", "portable", "Program\tura_gui.exe", "Program\config\provider_config.json", "Data")) {
+              $requiredPath = Join-Path $inspectDir $required
+              if (-not (Test-Path -LiteralPath $requiredPath)) {
+                throw "Portable release archive is missing required entry: $required"
+              }
+            }
+          }
+
       - name: Verify npm install uses local platform package
         run: node scripts/npm/verify-platform-install.mjs
 
