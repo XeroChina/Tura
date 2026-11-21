@@ -203,7 +203,7 @@ function Remove-LocalRuntimeState {
 }
 
 Require-Command "cargo" "Install Rust, then rerun this script."
-if (-not $BackendOnly) {
+if ($BuildTui -or $BuildGui -or $BuildTauri) {
   Require-Command "bun" "Install Bun, then rerun this script or pass -BackendOnly."
 }
 if ($BackendOnly) {
@@ -276,17 +276,10 @@ if ($BuildTui) {
 }
 
 if (-not $BackendOnly) {
-  New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
-  $LauncherOut = Join-Path $TargetDir "tura_launcher"
-  $bunArgs = @("build", "--compile", "--outfile", $LauncherOut, "apps\launcher\main.ts")
-  if ($IsWindows -or $env:OS -eq "Windows_NT") {
-    $LauncherOut = "$LauncherOut.exe"
-    $bunArgs = @("build", "--compile", "--windows-icon", $IconPath, "--outfile", $LauncherOut, "apps\launcher\main.ts")
-  }
   $PreviousTuraBuildKind = $env:TURA_BUILD_KIND
   $env:TURA_BUILD_KIND = "release"
   try {
-    Invoke-Checked "bun" $bunArgs
+    Invoke-Checked "cargo" @("build", "--release", "-p", "tura_launcher")
   } finally {
     $env:TURA_BUILD_KIND = $PreviousTuraBuildKind
   }

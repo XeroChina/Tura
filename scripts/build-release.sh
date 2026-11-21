@@ -55,7 +55,7 @@ BUILD_TAURI=0
 if [ "$BACKEND_ONLY" -eq 0 ] && [ "$SKIP_TUI" -eq 0 ]; then BUILD_TUI=1; fi
 if [ "$BACKEND_ONLY" -eq 0 ] && [ "$SKIP_GUI" -eq 0 ]; then BUILD_GUI=1; fi
 if [ "$BACKEND_ONLY" -eq 0 ] && [ "$SKIP_TAURI" -eq 0 ]; then BUILD_TAURI=1; fi
-if [ "$BACKEND_ONLY" -eq 0 ]; then
+if [ "$BUILD_TUI" -eq 1 ] || [ "$BUILD_GUI" -eq 1 ] || [ "$BUILD_TAURI" -eq 1 ]; then
   command -v bun >/dev/null 2>&1 || { echo "bun was not found on PATH; pass --backend-only to build Rust only." >&2; exit 1; }
 fi
 if [ "$BACKEND_ONLY" -eq 1 ]; then
@@ -250,15 +250,7 @@ if [ "$BUILD_TAURI" -eq 1 ]; then
 fi
 
 if [ "$BACKEND_ONLY" -eq 0 ]; then
-  mkdir -p "$TARGET_DIR"
-  case "$(uname -s 2>/dev/null || echo unknown)" in
-  MINGW*|MSYS*|CYGWIN*)
-    (cd "$REPO_ROOT" && TURA_BUILD_KIND=release bun build --compile --windows-icon "$ICON_PATH" --outfile "$TARGET_DIR/tura_launcher.exe" apps/launcher/main.ts)
-    ;;
-  *)
-    (cd "$REPO_ROOT" && TURA_BUILD_KIND=release bun build --compile --outfile "$TARGET_DIR/tura_launcher" apps/launcher/main.ts)
-    ;;
-  esac
+  (cd "$REPO_ROOT" && TURA_BUILD_KIND=release cargo build --release -p tura_launcher)
 fi
 
 echo "Release artifacts ready in $TARGET_DIR"

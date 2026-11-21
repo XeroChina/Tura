@@ -1,0 +1,14 @@
+[package]
+name = "tura_launcher"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+publish = false
+description = "Native portable launcher that starts the Tura GUI or CLI and routes user data into the portable Data directory."
+
+[[bin]]
+name = "tura_launcher"
+path = "src/main.rs"
+
+[dependencies]

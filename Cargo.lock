@@ -5826,6 +5826,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "tura_launcher"
+version = "0.1.0"
+
+[[package]]
 name = "tura_path"
 version = "0.1.0"
 dependencies = [

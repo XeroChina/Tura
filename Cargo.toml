@@ -30,6 +30,7 @@ default-members = [
 members = [
   ".",
   "agents",
+  "apps/launcher",
   "apps/tauri/src-tauri",
   "commands/generate_media",
   "commands/read_media",
