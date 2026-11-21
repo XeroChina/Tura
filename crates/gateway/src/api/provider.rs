@@ -415,6 +415,11 @@ fn persist_provider_auth(provider_id: &str, auth: &ProviderAuth) -> io::Result<(
         std::env::set_var(&api_key, key)
     };
 
+    if let Some(metadata) = auth.metadata.as_ref() {
+        write_client_credential(&env_path, metadata, "client_id_env", "client_id")?;
+        write_client_credential(&env_path, metadata, "client_secret_env", "client_secret")?;
+    }
+
     let requested_login = auth
         .metadata
         .as_ref()
@@ -512,6 +517,40 @@ fn persist_provider_auth(provider_id: &str, auth: &ProviderAuth) -> io::Result<(
         )?;
     }
 
+    Ok(())
+}
+
+fn write_client_credential(
+    env_path: &std::path::Path,
+    metadata: &HashMap<String, serde_json::Value>,
+    env_key_name: &str,
+    value_key: &str,
+) -> io::Result<()> {
+    let Some(env_key) = metadata
+        .get(env_key_name)
+        .and_then(|value| value.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    else {
+        return Ok(());
+    };
+    let Some(value) = metadata
+        .get(value_key)
+        .and_then(|value| value.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    else {
+        return Ok(());
+    };
+    upsert_env_value(env_path, env_key, value)?;
+    // SAFETY: the caller ensures no concurrent foreign environment access races with this mutation.
+    #[allow(
+        unsafe_code,
+        reason = "Rust 2024 process-environment mutation audited at the caller"
+    )]
+    unsafe {
+        std::env::set_var(env_key, value);
+    }
     Ok(())
 }
 

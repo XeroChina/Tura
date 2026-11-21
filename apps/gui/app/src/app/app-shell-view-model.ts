@@ -75,6 +75,12 @@ export type AppShellViewModel = {
   saveAgent: (agentId: string | undefined, payload: AgentUpsertRequest) => Promise<void>;
   deleteAgent: (agentId: string) => Promise<void>;
   saveProviderKey: (providerId: string, method: ProviderAuthMethod) => Promise<void>;
+  saveOAuthClient: (
+    providerId: string,
+    method: ProviderAuthMethod,
+    clientId: string,
+    clientSecret: string,
+  ) => Promise<void>;
   startProviderLogin: (providerId: string, methodIndex: number) => Promise<void>;
   completeProviderLogin: (providerId: string, code?: string, methodIndex?: number) => Promise<void>;
   logoutProvider: (providerId: string) => Promise<void>;

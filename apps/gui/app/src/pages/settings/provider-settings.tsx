@@ -137,6 +137,12 @@ export function ProviderAuthDialog(props: {
   onAuthDraft: (providerId: string, value: string) => void;
   onAuthCode: (providerId: string, value: string) => void;
   onSaveKey: (providerId: string, method: ProviderAuthMethod) => void;
+  onSaveOAuthClient: (
+    providerId: string,
+    method: ProviderAuthMethod,
+    clientId: string,
+    clientSecret: string,
+  ) => void;
   onStartLogin: (providerId: string, methodIndex: number) => void;
   onCompleteLogin: (providerId: string, code?: string, methodIndex?: number) => void;
   onLogout: (providerId: string) => void;
@@ -192,6 +198,7 @@ export function ProviderAuthDialog(props: {
           onAuthDraft={props.onAuthDraft}
           onAuthCode={props.onAuthCode}
           onSaveKey={props.onSaveKey}
+          onSaveOAuthClient={props.onSaveOAuthClient}
           onStartLogin={props.onStartLogin}
           onCompleteLogin={props.onCompleteLogin}
           onLogout={props.onLogout}
@@ -209,6 +216,12 @@ function ProviderAuthMethods(props: {
   onAuthDraft: (providerId: string, value: string) => void;
   onAuthCode: (providerId: string, value: string) => void;
   onSaveKey: (providerId: string, method: ProviderAuthMethod) => void;
+  onSaveOAuthClient: (
+    providerId: string,
+    method: ProviderAuthMethod,
+    clientId: string,
+    clientSecret: string,
+  ) => void;
   onStartLogin: (providerId: string, methodIndex: number) => void;
   onCompleteLogin: (providerId: string, code?: string, methodIndex?: number) => void;
   onLogout?: (providerId: string) => void;
@@ -264,6 +277,62 @@ function ProviderAuthMethods(props: {
                   )}
                 </Show>
                 <Show when={method.type === "oauth"}>
+                  <div class="login-method-controls oauth-client-controls">
+                    <input
+                      type="text"
+                      value={
+                        props.state.authDrafts[
+                          `${providerAuthDraftKey(provider().id, method)}:client_id`
+                        ] ?? ""
+                      }
+                      placeholder={t("oauthClientId")}
+                      onInput={(event) =>
+                        props.onAuthDraft(
+                          `${providerAuthDraftKey(provider().id, method)}:client_id`,
+                          event.currentTarget.value,
+                        )
+                      }
+                    />
+                    <input
+                      type="password"
+                      value={
+                        props.state.authDrafts[
+                          `${providerAuthDraftKey(provider().id, method)}:client_secret`
+                        ] ?? ""
+                      }
+                      placeholder={t("oauthClientSecret")}
+                      onInput={(event) =>
+                        props.onAuthDraft(
+                          `${providerAuthDraftKey(provider().id, method)}:client_secret`,
+                          event.currentTarget.value,
+                        )
+                      }
+                    />
+                    <button
+                      type="button"
+                      class="secondary"
+                      disabled={
+                        props.state.settingsSaving ||
+                        !props.state.authDrafts[
+                          `${providerAuthDraftKey(provider().id, method)}:client_id`
+                        ]?.trim()
+                      }
+                      onClick={() =>
+                        props.onSaveOAuthClient(
+                          provider().id,
+                          method,
+                          props.state.authDrafts[
+                            `${providerAuthDraftKey(provider().id, method)}:client_id`
+                          ] ?? "",
+                          props.state.authDrafts[
+                            `${providerAuthDraftKey(provider().id, method)}:client_secret`
+                          ] ?? "",
+                        )
+                      }
+                    >
+                      {t("save")}
+                    </button>
+                  </div>
                   <div class="login-method-controls oauth-controls">
                     <button
                       class="secondary oauth-login-button"

@@ -303,6 +303,8 @@ export const en = {
   open: "Open",
   openFileLocation: "Open file location",
   openLogin: "Open login",
+  oauthClientId: "OAuth client ID",
+  oauthClientSecret: "OAuth client secret",
   oauthLogin: "OAuth login",
   openWithSystemApp: "Open with system app",
   overview: "Overview",

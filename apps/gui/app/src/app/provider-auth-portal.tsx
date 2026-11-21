@@ -9,6 +9,12 @@ export function ProviderAuthPortal(props: {
   panel: ProviderAuthPanel;
   setState: Setter<AppState>;
   onSaveKey: (providerId: string, method: ProviderAuthMethod) => Promise<void>;
+  onSaveOAuthClient: (
+    providerId: string,
+    method: ProviderAuthMethod,
+    clientId: string,
+    clientSecret: string,
+  ) => Promise<void>;
   onStartLogin: (providerId: string, methodIndex: number) => Promise<void>;
   onCompleteLogin: (providerId: string, code?: string, methodIndex?: number) => Promise<void>;
   onLogout: (providerId: string) => Promise<void>;
@@ -43,6 +49,7 @@ export function ProviderAuthPortal(props: {
           }))
         }
         onSaveKey={props.onSaveKey}
+        onSaveOAuthClient={props.onSaveOAuthClient}
         onStartLogin={props.onStartLogin}
         onCompleteLogin={props.onCompleteLogin}
         onLogout={props.onLogout}

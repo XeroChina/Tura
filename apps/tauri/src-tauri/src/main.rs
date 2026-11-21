@@ -39,6 +39,10 @@ static PENDING_MAIN_WINDOW_ARGS: OnceLock<Mutex<Option<Vec<String>>>> = OnceLock
 
 fn main() {
     trace_gui_lifecycle("primary_start", serde_json::json!({}));
+    let mut context = tauri::generate_context!();
+    if let Some(override_directories) = portable_app_directories_override() {
+        context.config_mut().app.app_directories_override = Some(override_directories);
+    }
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             trace_gui_lifecycle(
@@ -68,8 +72,17 @@ fn main() {
             read_input_file,
             read_clipboard_image
         ])
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("failed to run tura_gui");
+}
+
+fn portable_app_directories_override() -> Option<tauri::utils::config::AppDirectoriesOverride> {
+    if std::env::var_os("TURA_PORTABLE").is_none() {
+        return None;
+    }
+    let data_dir = std::env::var_os("TURA_HOME")?;
+    (!data_dir.is_empty())
+        .then(|| tauri::utils::config::AppDirectoriesOverride::Root(PathBuf::from(data_dir)))
 }
 
 fn restore_main_window_from_args(app: &tauri::AppHandle, args: Vec<String>) {

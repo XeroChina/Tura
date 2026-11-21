@@ -293,6 +293,8 @@ export const zhCN = {
   open: "打开",
   openFileLocation: "打开文件位置",
   openLogin: "打开登录",
+  oauthClientId: "OAuth Client ID",
+  oauthClientSecret: "OAuth Client Secret",
   oauthLogin: "OAuth 登录",
   openWithSystemApp: "用系统默认应用打开",
   overview: "概览",

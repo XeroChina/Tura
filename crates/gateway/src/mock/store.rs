@@ -8,6 +8,7 @@ use crate::types::OutboundAction;
 use chrono::Utc;
 use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -26,6 +27,7 @@ pub struct Store {
     pub outbound_actions: Arc<RwLock<Vec<OutboundAction>>>,
     pub pending_oauth: Arc<RwLock<HashMap<String, PendingOAuth>>>,
     pub completed_oauth: Arc<RwLock<HashMap<String, ProviderAuth>>>,
+    pub config_path: Option<PathBuf>,
 }
 
 impl Default for Store {
@@ -36,6 +38,10 @@ impl Default for Store {
 
 impl Store {
     pub fn new() -> Self {
+        Self::with_config_path(None)
+    }
+
+    pub fn with_config_path(config_path: Option<PathBuf>) -> Self {
         let store = Self {
             sessions: Arc::new(RwLock::new(HashMap::new())),
             messages: Arc::new(RwLock::new(HashMap::new())),
@@ -46,7 +52,14 @@ impl Store {
             outbound_actions: Arc::new(RwLock::new(Vec::new())),
             pending_oauth: Arc::new(RwLock::new(HashMap::new())),
             completed_oauth: Arc::new(RwLock::new(HashMap::new())),
+            config_path,
         };
+        if let Some(path) = store.config_path.as_ref()
+            && let Ok(content) = std::fs::read_to_string(path)
+            && let Ok(config) = serde_json::from_str::<Config>(&content)
+        {
+            *store.config.write() = config;
+        }
         store.init_mock_data();
         store
     }
@@ -328,40 +341,48 @@ impl Store {
     }
 
     pub fn update_config(&self, patch: ConfigPatch) -> Config {
-        let mut config = self.config.write();
+        let updated = {
+            let mut config = self.config.write();
 
-        if let Some(language) = patch.language {
-            config.language = Some(language);
-        }
-        if let Some(theme) = patch.theme {
-            config.theme = Some(theme);
-        }
-        if let Some(corner_radius) = patch.corner_radius {
-            config.corner_radius = Some(corner_radius);
-        }
-        if let Some(main_font) = patch.main_font {
-            config.main_font = Some(main_font);
-        }
-        if let Some(code_font) = patch.code_font {
-            config.code_font = Some(code_font);
-        }
-        if let Some(main_font_size) = patch.main_font_size {
-            config.main_font_size = Some(main_font_size);
-        }
-        if let Some(code_font_size) = patch.code_font_size {
-            config.code_font_size = Some(code_font_size);
-        }
-        if let Some(model) = patch.model {
-            config.model = Some(model);
-        }
-        if let Some(agent) = patch.agent {
-            config.agent = Some(agent);
-        }
-        if let Some(skill_folders) = patch.skill_folders {
-            config.skill_folders = skill_folders;
-        }
+            if let Some(language) = patch.language {
+                config.language = Some(language);
+            }
+            if let Some(theme) = patch.theme {
+                config.theme = Some(theme);
+            }
+            if let Some(corner_radius) = patch.corner_radius {
+                config.corner_radius = Some(corner_radius);
+            }
+            if let Some(main_font) = patch.main_font {
+                config.main_font = Some(main_font);
+            }
+            if let Some(code_font) = patch.code_font {
+                config.code_font = Some(code_font);
+            }
+            if let Some(main_font_size) = patch.main_font_size {
+                config.main_font_size = Some(main_font_size);
+            }
+            if let Some(code_font_size) = patch.code_font_size {
+                config.code_font_size = Some(code_font_size);
+            }
+            if let Some(model) = patch.model {
+                config.model = Some(model);
+            }
+            if let Some(agent) = patch.agent {
+                config.agent = Some(agent);
+            }
+            if let Some(skill_folders) = patch.skill_folders {
+                config.skill_folders = skill_folders;
+            }
 
-        config.clone()
+            config.clone()
+        };
+        if let Some(path) = self.config_path.as_ref()
+            && let Err(error) = persist_config(path, &updated)
+        {
+            tracing::warn!(error = %error, path = %path.display(), "failed to persist global config");
+        }
+        updated
     }
 
     // ========================================================================
@@ -513,8 +534,21 @@ pub struct PendingOAuth {
 // Global Store Instance
 // ============================================================================
 
+fn persist_config(path: &std::path::Path, config: &Config) -> Result<(), String> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+    }
+    let content = serde_json::to_string_pretty(config).map_err(|error| error.to_string())?;
+    std::fs::write(path, content).map_err(|error| error.to_string())
+}
+
+fn persistent_config_path() -> Option<PathBuf> {
+    std::env::var_os("TURA_PORTABLE")?;
+    Some(tura_path::instance_home().join("gui-config.json"))
+}
+
 lazy_static::lazy_static! {
-    pub static ref GLOBAL_STORE: Store = Store::new();
+    pub static ref GLOBAL_STORE: Store = Store::with_config_path(persistent_config_path());
 }
 
 pub fn global_store() -> &'static Store {
@@ -568,6 +602,22 @@ mod tests {
         assert_eq!(providers.get("openai-api"), Some(&false));
         assert_eq!(providers.get("anthropic"), Some(&false));
         assert_eq!(providers.get("antigravity"), Some(&false));
+    }
+
+    #[test]
+    fn global_config_persists_to_config_path() {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let path = temp.path().join("gui-config.json");
+        let patch: ConfigPatch =
+            serde_json::from_value(serde_json::json!({ "theme": "dark" })).expect("config patch");
+
+        {
+            let store = Store::with_config_path(Some(path.clone()));
+            store.update_config(patch);
+        }
+
+        let reloaded = Store::with_config_path(Some(path));
+        assert_eq!(reloaded.get_config().theme.as_deref(), Some("dark"));
     }
 
     #[test]

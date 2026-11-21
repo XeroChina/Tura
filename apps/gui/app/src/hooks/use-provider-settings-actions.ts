@@ -406,12 +406,69 @@ export function useProviderSettingsActions(options: ProviderSettingsActionsOptio
     }
   }
 
+  async function saveOAuthClient(
+    providerId: string,
+    method: ProviderAuthMethod,
+    clientId: string,
+    clientSecret: string,
+  ) {
+    const trimmedClientId = clientId.trim();
+    const trimmedClientSecret = clientSecret.trim();
+    if (!trimmedClientId) {
+      return;
+    }
+    setState((previous) => ({
+      ...previous,
+      settingsSaving: true,
+      settingsNotice: undefined,
+      error: undefined,
+    }));
+    try {
+      const prefix = providerId.toUpperCase().replace(/-/g, "_");
+      const clientIdEnv = `${prefix}_OAUTH_CLIENT_ID`;
+      const clientSecretEnv = `${prefix}_OAUTH_CLIENT_SECRET`;
+      const draftKey = providerAuthDraftKey(providerId, method);
+      const ok = await rootClient().setProviderAuth(providerId, {
+        type: method.type,
+        key: trimmedClientId,
+        access: trimmedClientId,
+        metadata: {
+          login: method.login,
+          token_env: clientIdEnv,
+          client_id_env: clientIdEnv,
+          client_id: trimmedClientId,
+          ...(trimmedClientSecret
+            ? { client_secret_env: clientSecretEnv, client_secret: trimmedClientSecret }
+            : {}),
+        },
+      });
+      await refreshProviderSurface(providerId);
+      setState((previous) => ({
+        ...previous,
+        settingsSaving: false,
+        settingsNotice: ok ? t("saved") : t("notConfigured"),
+        authDrafts: {
+          ...previous.authDrafts,
+          [`${draftKey}:client_id`]: "",
+          [`${draftKey}:client_secret`]: "",
+        },
+      }));
+    } catch (error) {
+      setState((previous) => ({
+        ...previous,
+        settingsSaving: false,
+        error: errorMessage(error),
+      }));
+    }
+  }
+
   return {
     refreshProviderSurface,
     handleProviderAuthError,
     saveRuntimeSettings,
     updateModelTier,
     saveProviderKey,
+    saveOAuthClient,
     startProviderLogin,
     completeProviderLogin,
     logoutProvider,

@@ -70,16 +70,25 @@ fn main() {
     }
 
     if gui {
-        command.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
         if let Err(error) = command.spawn() {
-            eprintln!("Tura launcher could not start {}: {error}", target.display());
+            eprintln!(
+                "Tura launcher could not start {}: {error}",
+                target.display()
+            );
             std::process::exit(1);
         }
     } else {
         match command.status() {
             Ok(status) => std::process::exit(status.code().unwrap_or(1)),
             Err(error) => {
-                eprintln!("Tura launcher could not start {}: {error}", target.display());
+                eprintln!(
+                    "Tura launcher could not start {}: {error}",
+                    target.display()
+                );
                 std::process::exit(1);
             }
         }
