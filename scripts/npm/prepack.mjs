@@ -80,7 +80,7 @@ if (!packageJson.scripts?.prepack || !packageJson.scripts?.postpack) {
   process.exit(1);
 }
 
-const expectedPlatformPackages = ["tura-darwin-arm64", "tura-darwin-x64", "tura-linux-x64", "tura-win32-x64"];
+const expectedPlatformPackages = ["tura-win32-x64"];
 for (const packageName of expectedPlatformPackages) {
   if (packageJson.optionalDependencies?.[packageName] !== packageJson.version) {
     console.error(`npm package check failed; optional dependency ${packageName} must match version ${packageJson.version}.`);

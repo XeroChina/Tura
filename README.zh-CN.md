@@ -205,7 +205,7 @@ Tura 的 2.6 轮来自存档轮次合约中明确记录的 `compact_context` 事
 
 ### 通过 NPM 安装
 
-全局安装（macOS、Linux 和 Windows）：
+全局安装（Windows）：
 
 ```bash
 npm install -g tura-ai

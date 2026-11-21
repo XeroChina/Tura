@@ -67,7 +67,7 @@ jobs:
 
           jobs_json="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" --slurp)"
           artifacts_json="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" --slurp)"
-          packages=(tura-linux-x64 tura-darwin-x64 tura-darwin-arm64 tura-win32-x64)
+          packages=(tura-win32-x64)
           for package in "${packages[@]}"; do
             jq -e \
               --arg name "Build $package" \
@@ -112,7 +112,7 @@ jobs:
           exec > >(tee "$log") 2>&1
           trap 'status=$?; if [ "$status" -ne 0 ]; then tail_output="$(tail -n 40 "$log")"; tail_output="${tail_output//'%'/'%25'}"; tail_output="${tail_output//$'\r'/'%0D'}"; tail_output="${tail_output//$'\n'/'%0A'}"; echo "::error title=Platform npm repack failed::$tail_output"; fi; exit "$status"' EXIT
 
-          packages=(tura-linux-x64 tura-darwin-x64 tura-darwin-arm64 tura-win32-x64)
+          packages=(tura-win32-x64)
           for package_name in "${packages[@]}"; do
             tarball="release-assets/$package_name-$RELEASE_VERSION.tgz"
             work_dir="$RUNNER_TEMP/repack-$package_name"
@@ -149,20 +149,14 @@ jobs:
           $ErrorActionPreference = "Stop"
           $files = @(Get-ChildItem -LiteralPath release-assets -File)
           $requiredNames = @(
-            "tura-linux-x64-$env:RELEASE_VERSION.tgz",
-            "tura-darwin-x64-$env:RELEASE_VERSION.tgz",
-            "tura-darwin-arm64-$env:RELEASE_VERSION.tgz",
             "tura-win32-x64-$env:RELEASE_VERSION.tgz",
-            "tura-$env:RELEASE_TAG-linux-x64.tar.gz",
-            "tura-$env:RELEASE_TAG-macos-x64.tar.gz",
-            "tura-$env:RELEASE_TAG-macos-arm64.tar.gz",
             "tura-$env:RELEASE_TAG-windows-x64.zip"
           )
           $missing = @($requiredNames | Where-Object { $_ -notin $files.Name })
           if ($missing.Count -gt 0) {
             throw "Downloaded release assets are missing: $($missing -join ', ')."
           }
-          foreach ($platform in @("linux-x64", "macos-x64", "macos-arm64", "windows-x64")) {
+          foreach ($platform in @("windows-x64")) {
             $prefix = "tura-gui-only-$env:RELEASE_TAG-$platform"
             if (-not ($files.Name | Where-Object { $_.StartsWith($prefix, [System.StringComparison]::Ordinal) })) {
               throw "Downloaded release assets do not contain a Tauri installer for $platform."

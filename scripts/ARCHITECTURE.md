@@ -104,12 +104,11 @@ Important scripts:
   publishes the resulting packed tarball so npm registry metadata also reflects
   the slim runtime manifest.
 - `scripts/npm/package-platform.mjs`: stages the current OS release into a
-  platform npm package: `tura-linux-x64`, `tura-darwin-x64`,
-  `tura-darwin-arm64`, or `tura-win32-x64`. A desktop binary and installable
-  Tauri bundle are mandatory.
+  platform npm package. The release only publishes `tura-win32-x64`. A desktop
+  binary and installable Tauri bundle are mandatory.
 - `scripts/npm/package-release.mjs`: creates the matching GitHub Release archive
-  under `release/`, for example `tura-v0.1.0-windows-x64.zip` or
-  `tura-v0.1.0-macos-arm64.tar.gz`; each archive contains the same Tauri output.
+  under `release/`, for example `tura-v0.1.0-windows-x64.zip`; each archive
+  contains the same Tauri output.
 - `scripts/npm/stage-desktop-release-assets.mjs`: copies native Tauri installers
   to `release/desktop` as platform-qualified GitHub Release assets named with
   the `tura-gui-only-` prefix, avoiding collisions between macOS architectures.
@@ -194,27 +193,26 @@ GitHub Actions:
   (`ubuntu-latest`, `macos-latest`, `windows-2022`, and `windows-2025`) through
   install-script checks, backend release-script checks, and serial backend OS
   tests.
-- `.github/workflows/npm-release.yml` builds the four npm platform releases
-  (`tura-linux-x64`, `tura-darwin-x64`, `tura-darwin-arm64`, and
-  `tura-win32-x64`), verifies a local `npm install` of the main `tura-ai` package
+- `.github/workflows/npm-release.yml` builds the Windows npm platform release
+  (`tura-win32-x64`), verifies a local `npm install` of the main `tura-ai` package
   against the platform package, verifies the slim main npm package contents,
   verifies postinstall CLI registration plus `tura unregister-cli`, uploads
   release archives, and publishes npm packages with the first configured token
   from `NPM_TOKEN`, `NODE_AUTH_TOKEN`, or `NPM_AUTH_TOKEN`. Token authentication
-  is checked before the four platform builds, and npmjs publishing explicitly
+  is checked before the platform build, and npmjs publishing explicitly
   disables provenance because this path does not use trusted publishing.
   A branch named `npm-release/<tag>/<run-id>` invokes the idempotent recovery
-  path: it verifies the tag and completed source run, reuses that run's four
-  platform artifacts, and resumes platform, main, GitHub Release, and GitHub
-  Package publishing without rebuilding them.
+  path: it verifies the tag and completed source run, reuses that run's platform
+  artifacts, and resumes platform, main, GitHub Release, and GitHub Package
+  publishing without rebuilding them.
 - `.github/workflows/npm-release-assets-recovery.yml` supports a local-token
   recovery through `release-assets/<tag>/<run-id>`. It verifies and downloads
-  the original four workflow artifacts, uploads their contents to the GitHub
-  Release, and adds `SHA256SUMS.txt` so local npm publishing can verify every
-  downloaded tarball without rebuilding it.
+  the original workflow artifacts, uploads their contents to the GitHub Release,
+  and adds `SHA256SUMS.txt` so local npm publishing can verify every downloaded
+  tarball without rebuilding it.
 - `.github/workflows/npm-github-package-recovery.yml` handles the final
-  `github-package-release/<tag>` step after all five npmjs packages and the
-  GitHub Release exist. It verifies the immutable release tag, then packages
+  `github-package-release/<tag>` step after the npmjs packages and the GitHub
+  Release exist. It verifies the immutable release tag, then packages
   the recovery branch source so npm installation contracts match the repaired
   platform packages, and publishes `@tura-ai/tura` with the workflow's
   `GITHUB_TOKEN`.

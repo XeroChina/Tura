@@ -48,10 +48,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - label: ubuntu-latest
-            runner: ubuntu-latest
-          - label: macos-15
-            runner: macos-15
           - label: windows-2022
             runner: windows-2022
     steps:

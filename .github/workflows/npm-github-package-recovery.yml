@@ -55,7 +55,7 @@ jobs:
               ;;
           esac
 
-          packages=(tura-ai tura-linux-x64 tura-darwin-x64 tura-darwin-arm64 tura-win32-x64)
+          packages=(tura-ai tura-win32-x64)
           for package in "${packages[@]}"; do
             status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "https://registry.npmjs.org/$package/$version")"
             if [ "$status" != 200 ]; then

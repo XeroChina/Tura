@@ -209,7 +209,7 @@ Tura's 2.6-round result is calculated from explicit `compact_context` events in 
 
 ### NPM release
 
-Global install (macOS, Linux, and Windows):
+Global install (Windows):
 
 ```bash
 npm install -g tura-ai

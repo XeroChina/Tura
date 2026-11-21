@@ -97,12 +97,7 @@ export const npmPlatformRuntimeExcludedFiles = [
   "scripts/unregister-cli.sh"
 ];
 
-export const supportedPlatformPackages = [
-  ["win32", "x64"],
-  ["linux", "x64"],
-  ["darwin", "x64"],
-  ["darwin", "arm64"]
-];
+export const supportedPlatformPackages = [["win32", "x64"]];
 
 export function platformPackageName(platform = process.platform, arch = process.arch) {
   platformTriple(platform, arch);

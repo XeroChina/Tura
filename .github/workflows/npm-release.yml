@@ -86,18 +86,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-latest
-            package: tura-linux-x64
-            install: sh scripts/install.sh --environment-only
-            build: sh scripts/build-release.sh
-          - runner: macos-15-intel
-            package: tura-darwin-x64
-            install: sh scripts/install.sh --environment-only
-            build: sh scripts/build-release.sh
-          - runner: macos-15
-            package: tura-darwin-arm64
-            install: sh scripts/install.sh --environment-only
-            build: sh scripts/build-release.sh
           - runner: windows-2022
             package: tura-win32-x64
             install: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install.ps1 -EnvironmentOnly
@@ -260,7 +248,7 @@ jobs:
             $PSNativeCommandUseErrorActionPreference = $false
           }
           $version = node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version"
-          $packageNames = @("tura-linux-x64", "tura-darwin-x64", "tura-darwin-arm64", "tura-win32-x64")
+          $packageNames = @("tura-win32-x64")
           foreach ($packageName in $packageNames) {
             $tarball = Join-Path "release-assets" "$packageName-$version.tgz"
             if (-not (Test-Path -LiteralPath $tarball -PathType Leaf)) {
@@ -308,20 +296,14 @@ jobs:
           $files = @(Get-ChildItem -LiteralPath release-assets -File)
           $version = $tag -replace '^release-v', '' -replace '^release-', '' -replace '^release', '' -replace '^v', ''
           $requiredNames = @(
-            "tura-linux-x64-$version.tgz",
-            "tura-darwin-x64-$version.tgz",
-            "tura-darwin-arm64-$version.tgz",
             "tura-win32-x64-$version.tgz",
-            "tura-$tag-linux-x64.tar.gz",
-            "tura-$tag-macos-x64.tar.gz",
-            "tura-$tag-macos-arm64.tar.gz",
             "tura-$tag-windows-x64.zip"
           )
           $missing = @($requiredNames | Where-Object { $_ -notin $files.Name })
           if ($missing.Count -gt 0) {
             throw "Verified release assets are missing: $($missing -join ', ')."
           }
-          foreach ($platform in @("linux-x64", "macos-x64", "macos-arm64", "windows-x64")) {
+          foreach ($platform in @("windows-x64")) {
             $prefix = "tura-gui-only-$tag-$platform"
             if (-not ($files.Name | Where-Object { $_.StartsWith($prefix, [System.StringComparison]::Ordinal) })) {
               throw "Verified release assets do not contain a Tauri installer for $platform."
@@ -489,7 +471,7 @@ jobs:
 
           jobs_json="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" --slurp)"
           artifacts_json="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" --slurp)"
-          packages=(tura-linux-x64 tura-darwin-x64 tura-darwin-arm64 tura-win32-x64)
+          packages=(tura-win32-x64)
           for package in "${packages[@]}"; do
             if ! jq -e \
               --arg name "Build $package" \
@@ -600,20 +582,14 @@ jobs:
           $ErrorActionPreference = "Stop"
           $files = @(Get-ChildItem -LiteralPath release-assets -File)
           $requiredNames = @(
-            "tura-linux-x64-$env:RELEASE_VERSION.tgz",
-            "tura-darwin-x64-$env:RELEASE_VERSION.tgz",
-            "tura-darwin-arm64-$env:RELEASE_VERSION.tgz",
             "tura-win32-x64-$env:RELEASE_VERSION.tgz",
-            "tura-$env:RELEASE_TAG-linux-x64.tar.gz",
-            "tura-$env:RELEASE_TAG-macos-x64.tar.gz",
-            "tura-$env:RELEASE_TAG-macos-arm64.tar.gz",
             "tura-$env:RELEASE_TAG-windows-x64.zip"
           )
           $missing = @($requiredNames | Where-Object { $_ -notin $files.Name })
           if ($missing.Count -gt 0) {
             throw "Downloaded release assets are missing: $($missing -join ', ')."
           }
-          foreach ($platform in @("linux-x64", "macos-x64", "macos-arm64", "windows-x64")) {
+          foreach ($platform in @("windows-x64")) {
             $prefix = "tura-gui-only-$env:RELEASE_TAG-$platform"
             if (-not ($files.Name | Where-Object { $_.StartsWith($prefix, [System.StringComparison]::Ordinal) })) {
               throw "Downloaded release assets do not contain a Tauri installer for $platform."
@@ -664,7 +640,7 @@ jobs:
             return 1
           }
 
-          packages=(tura-linux-x64 tura-darwin-x64 tura-darwin-arm64 tura-win32-x64)
+          packages=(tura-win32-x64)
           for package in "${packages[@]}"; do
             tarball="release-assets/$package-$RELEASE_VERSION.tgz"
             status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "https://registry.npmjs.org/$package/$RELEASE_VERSION")"
@@ -815,7 +791,7 @@ jobs:
           set -euo pipefail
           log=.release-logs/recovery-verification.log
           exec > >(tee "$log") 2>&1
-          packages=(tura-ai tura-linux-x64 tura-darwin-x64 tura-darwin-arm64 tura-win32-x64)
+          packages=(tura-ai tura-win32-x64)
           for package in "${packages[@]}"; do
             test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "https://registry.npmjs.org/$package/$RELEASE_VERSION")" = 200
           done
@@ -823,17 +799,11 @@ jobs:
           test "$(git rev-parse HEAD)" = "$TAG_SHA"
           asset_names="$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')"
           for required in \
-            "tura-linux-x64-$RELEASE_VERSION.tgz" \
-            "tura-darwin-x64-$RELEASE_VERSION.tgz" \
-            "tura-darwin-arm64-$RELEASE_VERSION.tgz" \
             "tura-win32-x64-$RELEASE_VERSION.tgz" \
-            "tura-$RELEASE_TAG-linux-x64.tar.gz" \
-            "tura-$RELEASE_TAG-macos-x64.tar.gz" \
-            "tura-$RELEASE_TAG-macos-arm64.tar.gz" \
             "tura-$RELEASE_TAG-windows-x64.zip"; do
             grep -Fxq "$required" <<<"$asset_names"
           done
-          for platform in linux-x64 macos-x64 macos-arm64 windows-x64; do
+          for platform in windows-x64; do
             grep -Eq "^tura-gui-only-$RELEASE_TAG-$platform" <<<"$asset_names"
           done
           echo "Recovered release $RELEASE_TAG is complete."
